@@ -74,8 +74,12 @@ class Pregel():
             vertex.superstep +=1
             vertex.incoming_messages = []
         for vertex in self.vertices:
-            for (receiving_vertix,message) in vertex.outgoing_messages:
-                receiving_vertix.incoming_messages.append((vertex,message))
+            for (receiving_vertex,message) in vertex.outgoing_messages:
+                receiving_vertex.incoming_messages.append((vertex,message))
+                # Fig 1 in Pregel paper
+                receiving_vertex.active = True
+            # otherwise we keep sending old messages!
+            vertex.outgoing_messages = []
 
     def check_active(self):
         """Returns True if there are any active vertices, and False
