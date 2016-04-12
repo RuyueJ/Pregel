@@ -11,6 +11,8 @@ identical.
 
 """
 
+from __future__ import print_function
+
 from pregel import Vertex, Pregel
 
 import numpy as np
@@ -26,15 +28,15 @@ source = 0
 
 def main():
     # vertices start with infinite distance
-    vertices = [ShortestPathVertex(j, np.inf, []) 
+    vertices = [ShortestPathVertex(j, np.inf, [])
                 for j in range(num_vertices)]
     create_edges(vertices)
-    
+
     sp_test = shortest_path_test(vertices)
-    print "NetworkX computation of SP:\n%s" % sp_test
-    
+    print("NetworkX computation of SP:\n%s" % sp_test)
+
     sp_pregel = shortest_path_pregel(vertices)
-    print "Pregel computation of SP:\n%s" % sp_pregel
+    print("Pregel computation of SP:\n%s" % sp_pregel)
 
     assert(sp_test == sp_pregel)
 
@@ -70,14 +72,13 @@ class ShortestPathVertex(Vertex):
             mindist = 0
         else:
             mindist = np.inf
-        for vertex, val in self.incoming_messages:
+        for vertex, wt, val in self.incoming_messages:
             mindist = min(mindist, val)
         if mindist < self.value:
             self.value = mindist
-            self.outgoing_messages = [(vertex, self.value + 1)
+            self.outgoing_messages = [(vertex, 1, self.value + 1)
                                       for vertex in self.out_vertices]
         else:
-            #self.outgoing_messages = []
             self.active = False
 
 if __name__ == "__main__":

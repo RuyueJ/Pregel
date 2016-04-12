@@ -8,9 +8,10 @@ It tests pregel.py by computing the PageRank for the same graph in a
 different, more conventional way, and showing that the two outputs are
 near-identical."""
 
+from __future__ import print_function
 from pregel import Vertex, Pregel
 
-# The next two imports are only needed for the test.  
+# The next two imports are only needed for the test.
 from numpy import mat, eye, zeros, ones, linalg
 import random
 
@@ -18,16 +19,16 @@ num_workers = 4
 num_vertices = 10
 
 def main():
-    vertices = [PageRankVertex(j,1.0/num_vertices,[]) 
+    vertices = [PageRankVertex(j,1.0/num_vertices,[])
                 for j in range(num_vertices)]
     create_edges(vertices)
     pr_test = pagerank_test(vertices)
-    print "Test computation of pagerank:\n%s" % pr_test
+    print("Test computation of pagerank:\n%s" % pr_test)
     pr_pregel = pagerank_pregel(vertices)
-    print "Pregel computation of pagerank:\n%s" % pr_pregel
+    print("Pregel computation of pagerank:\n%s" % pr_pregel)
     diff = pr_pregel-pr_test
-    print "Difference between the two pagerank vectors:\n%s" % diff
-    print "The norm of the difference is: %s" % linalg.norm(diff)
+    print("Difference between the two pagerank vectors:\n%s" % diff)
+    print("The norm of the difference is: %s" % linalg.norm(diff))
 
 def create_edges(vertices):
     """Generates 4 randomly chosen outgoing edges from each vertex in
@@ -64,9 +65,9 @@ class PageRankVertex(Vertex):
         # but as an initial demonstration this works fine.
         if self.superstep < 50:
             self.value = 0.15 / num_vertices + 0.85*sum(
-                [pagerank for (vertex,pagerank) in self.incoming_messages])
+                [pagerank for (vertex,wt,pagerank) in self.incoming_messages])
             outgoing_pagerank = self.value / len(self.out_vertices)
-            self.outgoing_messages = [(vertex,outgoing_pagerank) 
+            self.outgoing_messages = [(vertex,1,outgoing_pagerank)
                                       for vertex in self.out_vertices]
         else:
             self.active = False

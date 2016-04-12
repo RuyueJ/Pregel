@@ -3,10 +3,11 @@ version of Google's Pregel system for large-scale graph processing."""
 
 import collections
 import threading
+import multiprocessing
 
 class Vertex():
 
-    def __init__(self,id,value,out_vertices):
+    def __init__(self,id,value,out_vertices,out_weights=None):
         # This is mostly self-explanatory, but has a few quirks:
         #
         # self.id is included mainly because it's described in the
@@ -17,19 +18,27 @@ class Vertex():
         # self.superstep.  It's arguably not wise to store many copies
         # of global state in instance variables, but Pregel's
         # synchronous nature lets us get away with it.
-        self.id = id 
+        self.id = id
         self.value = value
         self.out_vertices = out_vertices
+        self.out_weights = out_weights
         self.incoming_messages = []
         self.outgoing_messages = []
         self.active = True
         self.superstep = 0
-   
+
 class Pregel():
 
-    def __init__(self,vertices,num_workers):
+    def __init__(self,vertices,num_workers=None,stats_fn=None):
         self.vertices = vertices
-        self.num_workers = num_workers
+        if num_workers:
+            self.num_workers = num_workers
+        else:
+            self.num_workers = multiprocessing.cpu_count()
+        if stats_fn:
+            self.stats = stats_fn
+        else:
+            self.stats = lambda vs: vs[0].superstep
 
     def run(self):
         """Runs the Pregel instance."""
@@ -52,7 +61,7 @@ class Pregel():
         return hash(vertex) % self.num_workers
 
     def superstep(self):
-        """Completes a single superstep.  
+        """Completes a single superstep.
 
         Note that in this implementation, worker threads are spawned,
         and then destroyed during each superstep.  This creation and
@@ -67,6 +76,7 @@ class Pregel():
             worker.start()
         for worker in workers:
             worker.join()
+        print(self.stats(self.vertices))
 
     def redistribute_messages(self):
         """Updates the message lists for all vertices."""
@@ -74,8 +84,8 @@ class Pregel():
             vertex.superstep +=1
             vertex.incoming_messages = []
         for vertex in self.vertices:
-            for (receiving_vertex,message) in vertex.outgoing_messages:
-                receiving_vertex.incoming_messages.append((vertex,message))
+            for (receiving_vertex,wt,message) in vertex.outgoing_messages:
+                receiving_vertex.incoming_messages.append((vertex,wt,message))
                 # Fig 1 in Pregel paper
                 receiving_vertex.active = True
             # otherwise we keep sending old messages!
