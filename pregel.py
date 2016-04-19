@@ -43,8 +43,10 @@ class Pregel():
     def run(self):
         """Runs the Pregel instance."""
         self.partition = self.partition_vertices()
+        self.data = []
         while self.check_active():
-            self.superstep()
+            # save the data at this step
+            self.data.append(self.superstep())
             self.redistribute_messages()
 
     def partition_vertices(self):
@@ -76,7 +78,7 @@ class Pregel():
             worker.start()
         for worker in workers:
             worker.join()
-        print(self.stats(self.vertices))
+        return self.stats(self.vertices)
 
     def redistribute_messages(self):
         """Updates the message lists for all vertices."""
